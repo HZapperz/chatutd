@@ -1,25 +1,27 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
-import axios from 'axios'; // Import axios for HTTP requests
 import './ChatInterface.css';
 
 interface ChatMessage {
-  text: string;
-  timestamp: Date;
+  user_id: string;
+  message: string;
+  timestamp: number;
 }
 
 const MAX_MESSAGE_LENGTH = 100;
 const SCROLL_DELAY = 100; // ms
 const SCROLL_THRESHOLD = 70; // px
-const SERVER_URL = process.env.REACT_APP_SERVER_URL
+const SERVER_URL = process.env.REACT_APP_SERVER_URL;
 
 const ChatInterface: React.FC = () => {
-  const [message, setMessage] = useState('');
+  const [inputMessage, setInputMessage] = useState('');
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
   const [isAutoScrollEnabled, setIsAutoScrollEnabled] = useState(true);
   const [showScrollButton, setShowScrollButton] = useState(false);
+  const [isConnected, setIsConnected] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const chatMessagesRef = useRef<HTMLDivElement>(null);
   const isAutoScrollingRef = useRef(false);
+  const websocket = useRef<WebSocket | null>(null);
 
   const isScrolledToBottom = () => {
     const chatMessagesElement = chatMessagesRef.current;
@@ -67,49 +69,46 @@ const ChatInterface: React.FC = () => {
     scrollToBottom();
   };
 
-  const handleSend = async () => {
-    if (message.trim()) {
-      const newMessage: ChatMessage = { text: message.slice(0, MAX_MESSAGE_LENGTH), timestamp: new Date() };
-      
-      try {
-        console.log('Sending message to:', `${SERVER_URL}/post`); // For debugging
-        const response = await axios.post(`${SERVER_URL}/post`, { message: newMessage.text }, {
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        });
-        
-        console.log('Server response:', response.data); // For debugging
-  
-        if (response.data.status === 'success') {
-          setChatMessages(prevMessages => [...prevMessages, newMessage]);
-          setMessage('');
-          setIsAutoScrollEnabled(true);
-          setShowScrollButton(false);
-        } else {
-          console.error('Server responded with an error:', response.data);
-        }
-      } catch (error) {
-        console.error('There was an error sending the message:', error);
-        if (axios.isAxiosError(error) && error.response) {
-          console.error('Response data:', error.response.data);
-          console.error('Response status:', error.response.status);
-        }
+  useEffect(() => {
+    connectWebSocket();
+
+    return () => {
+      if (websocket.current) {
+        websocket.current.close();
       }
-    }
+    };
+  }, []);
+
+  const connectWebSocket = () => {
+    websocket.current = new WebSocket(`${SERVER_URL}/chat`);
+
+    websocket.current.onopen = () => {
+      console.log('WebSocket Connected');
+      setIsConnected(true);
+    };
+
+    websocket.current.onmessage = (event) => {
+      const message: ChatMessage = JSON.parse(event.data);
+      setChatMessages((prevMessages) => [...prevMessages, message]);
+    };
+
+    websocket.current.onclose = () => {
+      console.log('WebSocket Disconnected');
+      setIsConnected(false);
+      // Attempt to reconnect after a delay
+      setTimeout(connectWebSocket, 5000);
+    };
   };
 
-  const formatTime = (date: Date) => {
-    return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-  };
-
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setMessage(e.target.value.slice(0, MAX_MESSAGE_LENGTH));
-  };
-
-  const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter') {
-      handleSend();
+  const sendMessage = () => {
+    if (inputMessage.trim() && websocket.current?.readyState === WebSocket.OPEN) {
+      const chatMessage: ChatMessage = {
+        user_id: '1', // Replace this with an actual user ID if applicable
+        message: inputMessage.slice(0, MAX_MESSAGE_LENGTH),
+        timestamp: Math.floor(Date.now() / 1000),
+      };
+      websocket.current.send(JSON.stringify(chatMessage));
+      setInputMessage('');
     }
   };
 
@@ -122,9 +121,9 @@ const ChatInterface: React.FC = () => {
       >
         {chatMessages.map((msg, index) => (
           <div key={index} className="message-container">
-            <span className="message-sender">Anonymous</span>
-            <span className="message-timestamp">{formatTime(msg.timestamp)}</span>
-            <div className="message-text">{msg.text}</div>
+            <span className="message-sender">{msg.user_id}</span>
+            <span className="message-timestamp">{new Date(msg.timestamp * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+            <div className="message-text">{msg.message}</div>
           </div>
         ))}
         <div ref={messagesEndRef} />
@@ -138,13 +137,15 @@ const ChatInterface: React.FC = () => {
         <input
           type="text"
           className="chat-input"
-          value={message}
-          onChange={handleInputChange}
-          onKeyPress={handleKeyPress}
+          value={inputMessage}
+          onChange={(e) => setInputMessage(e.target.value.slice(0, MAX_MESSAGE_LENGTH))}
+          onKeyPress={(e) => e.key === 'Enter' && sendMessage()}
           placeholder={`Type your message here (${MAX_MESSAGE_LENGTH} characters max)`}
+          disabled={!isConnected}
         />
-        <button className="send-button" onClick={handleSend}>Send</button>
+        <button className="send-button" onClick={sendMessage} disabled={!isConnected}>Send</button>
       </div>
+      {!isConnected && <div className="connection-status">Connecting...</div>}
     </div>
   );
 };

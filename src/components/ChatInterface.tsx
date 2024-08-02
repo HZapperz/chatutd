@@ -96,9 +96,15 @@ const ChatInterface: React.FC = () => {
     };
 
     websocket.current.onmessage = (event) => {
-      const message: ChatMessage = JSON.parse(event.data);
-      setChatMessages((prevMessages) => [...prevMessages, message]);
-      console.log('Received message:', message); // Added logging
+      const incomingMessages = JSON.parse(event.data);
+
+      // Handle both single and multiple messages
+      setChatMessages((prevMessages) => [
+        ...prevMessages,
+        ...(Array.isArray(incomingMessages) ? incomingMessages : [incomingMessages]),
+      ]);
+      
+      console.log('Received message:', incomingMessages); // Added logging
     };
 
     websocket.current.onclose = (event) => {

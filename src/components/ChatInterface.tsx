@@ -72,27 +72,29 @@ const ChatInterface: React.FC = () => {
       const newMessage: ChatMessage = { text: message.slice(0, MAX_MESSAGE_LENGTH), timestamp: new Date() };
       
       try {
-        // Send message to backend
+        console.log('Sending message to:', `${SERVER_URL}/post`); // For debugging
         const response = await axios.post(`${SERVER_URL}/post`, { message: newMessage.text }, {
           headers: {
             'Content-Type': 'application/json',
           },
-          withCredentials: false, // Add this line
         });
         
-        console.log('Server response:', response.data); // Add this line for debugging
-
+        console.log('Server response:', response.data); // For debugging
+  
         if (response.data.status === 'success') {
-          // If successful, update chatMessages
           setChatMessages(prevMessages => [...prevMessages, newMessage]);
           setMessage('');
           setIsAutoScrollEnabled(true);
           setShowScrollButton(false);
         } else {
-          console.error('Server responded with an error');
+          console.error('Server responded with an error:', response.data);
         }
       } catch (error) {
         console.error('There was an error sending the message:', error);
+        if (axios.isAxiosError(error) && error.response) {
+          console.error('Response data:', error.response.data);
+          console.error('Response status:', error.response.status);
+        }
       }
     }
   };

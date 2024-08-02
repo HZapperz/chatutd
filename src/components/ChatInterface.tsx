@@ -72,10 +72,18 @@ const ChatInterface: React.FC = () => {
   useEffect(() => {
     connectWebSocket();
 
+    // Send a ping message every 30 seconds to keep the connection alive
+    const pingInterval = setInterval(() => {
+      if (websocket.current && websocket.current.readyState === WebSocket.OPEN) {
+        websocket.current.send(JSON.stringify({ type: 'ping' }));
+      }
+    }, 30000); // 30 seconds interval
+
     return () => {
       if (websocket.current) {
         websocket.current.close();
       }
+      clearInterval(pingInterval); // Cleanup ping interval
     };
   }, []);
 
@@ -90,13 +98,20 @@ const ChatInterface: React.FC = () => {
     websocket.current.onmessage = (event) => {
       const message: ChatMessage = JSON.parse(event.data);
       setChatMessages((prevMessages) => [...prevMessages, message]);
+      console.log('Received message:', message); // Added logging
     };
 
-    websocket.current.onclose = () => {
-      console.log('WebSocket Disconnected');
+    websocket.current.onclose = (event) => {
+      console.log('WebSocket Disconnected:', event.reason || 'Unknown reason');
       setIsConnected(false);
       // Attempt to reconnect after a delay
       setTimeout(connectWebSocket, 5000);
+    };
+
+    websocket.current.onerror = (error) => {
+      console.error('WebSocket Error:', error);
+      setIsConnected(false);
+      // Consider attempting to reconnect or notify the user
     };
   };
 

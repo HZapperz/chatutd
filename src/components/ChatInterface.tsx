@@ -91,36 +91,36 @@ const ChatInterface: React.FC = () => {
     websocket.current = new WebSocket(`${SERVER_URL}/chat`);
 
     websocket.current.onopen = () => {
-      console.log('WebSocket Connected');
-      setIsConnected(true);
+        console.log('WebSocket Connected');
+        setIsConnected(true);
     };
 
     websocket.current.onmessage = (event) => {
-      const incomingMessages = JSON.parse(event.data);
+        console.log('Message received:', event.data);
+        const incomingMessage = JSON.parse(event.data);
 
-      // Log received data to the console
-      console.log('Received data:', incomingMessages);
+        console.log('Parsed data:', incomingMessage);
 
-      // Handle both single and multiple messages
-      setChatMessages((prevMessages) => [
-        ...prevMessages,
-        ...(Array.isArray(incomingMessages) ? incomingMessages : [incomingMessages]),
-      ]);
+        setChatMessages((prevMessages) => [
+            ...prevMessages,
+            ...(Array.isArray(incomingMessage) ? incomingMessage : [incomingMessage]),
+        ]);
     };
 
     websocket.current.onclose = (event) => {
-      console.log('WebSocket Disconnected:', event.reason || 'Unknown reason');
-      setIsConnected(false);
-      // Attempt to reconnect after a delay
-      setTimeout(connectWebSocket, 5000);
+        console.log('WebSocket Disconnected:', event.reason || 'Unknown reason');
+        setIsConnected(false);
+        // Attempt to reconnect after a delay
+        setTimeout(connectWebSocket, 5000);
     };
 
     websocket.current.onerror = (error) => {
-      console.error('WebSocket Error:', error);
-      setIsConnected(false);
-      // Consider attempting to reconnect or notify the user
+        console.error('WebSocket Error:', error);
+        setIsConnected(false);
+        // Consider attempting to reconnect or notify the user
     };
   };
+
 
   const sendMessage = () => {
     if (inputMessage.trim() && websocket.current?.readyState === WebSocket.OPEN) {

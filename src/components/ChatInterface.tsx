@@ -10,6 +10,7 @@ interface ChatMessage {
 const MAX_MESSAGE_LENGTH = 100;
 const SCROLL_DELAY = 100; // ms
 const SCROLL_THRESHOLD = 70; // px
+const SERVER_URL = process.env.REACT_APP_SERVER_URL
 
 const ChatInterface: React.FC = () => {
   const [message, setMessage] = useState('');
@@ -72,7 +73,7 @@ const ChatInterface: React.FC = () => {
       
       try {
         // Send message to backend
-        const response = await axios.post('http://localhost:3030/post', { message: newMessage.text }, {
+        const response = await axios.post(`${SERVER_URL}/post`, { message: newMessage.text }, {
           headers: {
             'Content-Type': 'application/json',
           },
@@ -95,7 +96,7 @@ const ChatInterface: React.FC = () => {
       }
     }
   };
-  
+
   const formatTime = (date: Date) => {
     return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   };

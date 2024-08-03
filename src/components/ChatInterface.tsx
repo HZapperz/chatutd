@@ -12,6 +12,8 @@ const SCROLL_DELAY = 100; // ms
 const SCROLL_THRESHOLD = 70; // px
 const SERVER_URL = process.env.REACT_APP_SERVER_URL;
 
+const RECONNECT_TIMEOUT = 5000; // 5 seconds
+
 const ChatInterface: React.FC = () => {
   const [inputMessage, setInputMessage] = useState('');
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
@@ -21,7 +23,7 @@ const ChatInterface: React.FC = () => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const chatMessagesRef = useRef<HTMLDivElement>(null);
   const isAutoScrollingRef = useRef(false);
-  const websocket = useRef<WebSocket | null>(null);
+  const eventSourceRef = useRef<EventSource | null>(null);
 
   const isScrolledToBottom = () => {
     const chatMessagesElement = chatMessagesRef.current;
@@ -69,68 +71,82 @@ const ChatInterface: React.FC = () => {
     scrollToBottom();
   };
 
-  useEffect(() => {
-    connectWebSocket();
-
-    // Send a ping message every 30 seconds to keep the connection alive
-    const pingInterval = setInterval(() => {
-      if (websocket.current && websocket.current.readyState === WebSocket.OPEN) {
-        websocket.current.send(JSON.stringify({ type: 'ping' }));
+  const fetchArchivedMessages = useCallback(async () => {
+    try {
+      const response = await fetch(`${SERVER_URL}/archive`);
+      if (!response.ok) {
+        throw new Error('Failed to fetch archived messages');
       }
-    }, 30000); // 30 seconds interval
+      const archivedMessages = await response.json();
+      setChatMessages(archivedMessages);
+    } catch (error) {
+      console.error('Error fetching archived messages:', error);
+    }
+  }, []);
 
-    return () => {
-      if (websocket.current) {
-        websocket.current.close();
-      }
-      clearInterval(pingInterval); // Cleanup ping interval
+  const connectSSE = useCallback(() => {
+    if (eventSourceRef.current) {
+      eventSourceRef.current.close();
+    }
+
+    eventSourceRef.current = new EventSource(`${SERVER_URL}/chat`);
+
+    eventSourceRef.current.onopen = () => {
+      console.log('SSE Connected');
+      setIsConnected(true);
+    };
+
+    eventSourceRef.current.onmessage = (event) => {
+      console.log('Message received:', event.data);
+      const incomingMessage = JSON.parse(event.data);
+      setChatMessages((prevMessages) => [...prevMessages, incomingMessage]);
+    };
+
+    eventSourceRef.current.onerror = (error) => {
+      console.error('SSE Error:', error);
+      setIsConnected(false);
+      eventSourceRef.current?.close();
+      setTimeout(connectSSE, RECONNECT_TIMEOUT);
     };
   }, []);
 
-  const connectWebSocket = () => {
-    websocket.current = new WebSocket(`${SERVER_URL}/chat`);
+  useEffect(() => {
+    fetchArchivedMessages();
+    connectSSE();
 
-    websocket.current.onopen = () => {
-        console.log('WebSocket Connected');
-        setIsConnected(true);
+    return () => {
+      if (eventSourceRef.current) {
+        eventSourceRef.current.close();
+      }
     };
+  }, [connectSSE, fetchArchivedMessages]);
 
-    websocket.current.onmessage = (event) => {
-        console.log('Message received:', event.data);
-        const incomingMessage = JSON.parse(event.data);
-
-        console.log('Parsed data:', incomingMessage);
-
-        setChatMessages((prevMessages) => [
-            ...prevMessages,
-            ...(Array.isArray(incomingMessage) ? incomingMessage : [incomingMessage]),
-        ]);
-    };
-
-    websocket.current.onclose = (event) => {
-        console.log('WebSocket Disconnected:', event.reason || 'Unknown reason');
-        setIsConnected(false);
-        // Attempt to reconnect after a delay
-        setTimeout(connectWebSocket, 5000);
-    };
-
-    websocket.current.onerror = (error) => {
-        console.error('WebSocket Error:', error);
-        setIsConnected(false);
-        // Consider attempting to reconnect or notify the user
-    };
-  };
-
-
-  const sendMessage = () => {
-    if (inputMessage.trim() && websocket.current?.readyState === WebSocket.OPEN) {
+  const sendMessage = async () => {
+    if (inputMessage.trim() && isConnected) {
       const chatMessage: ChatMessage = {
-        user_id: '1', // Replace this with an actual user ID if applicable
+        user_id: 'anonymous', // Replace this with an actual user ID if applicable
         message: inputMessage.slice(0, MAX_MESSAGE_LENGTH),
         timestamp: Math.floor(Date.now() / 1000),
       };
-      websocket.current.send(JSON.stringify(chatMessage));
-      setInputMessage('');
+      
+      try {
+        const response = await fetch(`${SERVER_URL}/send`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(chatMessage),
+        });
+
+        if (!response.ok) {
+          throw new Error('Failed to send message');
+        }
+
+        setInputMessage('');
+      } catch (error) {
+        console.error('Error sending message:', error);
+        // Handle error (e.g., show an error message to the user)
+      }
     }
   };
 

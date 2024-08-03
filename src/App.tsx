@@ -14,8 +14,8 @@ const App: React.FC = () => {
         <Navigation />
         <main className="main-content">
           <div className="qotd-banner">
-            <p>Question of the Day:</p>
-            <p className="qotd">Your QOTD Here</p>
+            <p>Question of the Chat:</p>
+            <p className="qotd">What are your feelings about UTD</p>
           </div>
           <div className="page-content">
             <Routes>

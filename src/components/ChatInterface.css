@@ -97,12 +97,6 @@ body, html {
   background-color: #00553e;
 }
 
-.banner {
-  background-color: #f4a460; /* Your orange color */
-  padding: 10px;
-  text-align: center;
-}
-
 .scroll-down-button {
   position: absolute;
   bottom: 70px;
@@ -125,10 +119,14 @@ body, html {
   background-color: rgba(0, 0, 0, 0.7);
 }
 
-@media (max-width: 400px) {
+@media (max-width: 768px) {
+  body, html {
+    overflow: auto;
+  }
+
   .chat-container {
     width: 100%;
-    height: calc(100vh - 130px); /* Adjust based on your header and banner height */
+    height: calc(100vh - 120px); /* Adjust based on your header, navigation, and banner height */
     margin: 0;
     border-radius: 0;
   }

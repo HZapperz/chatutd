@@ -1,7 +1,5 @@
-// DevLogs.tsx
 import React from 'react';
 import './DevLogs.css';
-
 
 interface UpdateLog {
   date: string;
@@ -11,24 +9,15 @@ interface UpdateLog {
 
 const updateLogs: UpdateLog[] = [
   {
-    date: "2023-07-31",
+    date: "2024-08-03",
     version: "1.0.0",
     changes: [
       "Initial release of ChatUTD",
       "Implemented basic chat functionality",
-      "Added Question of the Day feature"
-    ]
-  },
-  {
-    date: "2023-08-07",
-    version: "1.1.0",
-    changes: [
-      "Improved UI layout",
-      "Added timestamps to messages",
-      "Implemented Dev Logs page"
+      "Added Question of the Day feature",
+      "Created basic responsive design"
     ]
   }
-  // Add more update logs as you implement new features
 ];
 
 const DevLogs: React.FC = () => {
@@ -45,6 +34,9 @@ const DevLogs: React.FC = () => {
           </ul>
         </div>
       ))}
+      <p className="suggestion-link">
+        Have any suggestions? <a href="https://forms.gle/your-google-form-link" target="_blank" rel="noopener noreferrer">Let us know!</a>
+      </p>
     </div>
   );
 };

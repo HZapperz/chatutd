@@ -16,7 +16,7 @@ const Navigation: React.FC = () => {
 
   const navItems = [
     { path: '/', name: 'Chat' },
-    { path: '/archive', name: 'Archive' },
+    //{ path: '/archive', name: 'Archive' },
     { path: '/about', name: 'About' },
     { path: '/devlogs', name: 'Dev Logs' },
   ];

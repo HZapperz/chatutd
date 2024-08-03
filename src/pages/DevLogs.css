@@ -49,3 +49,19 @@
   .update-log {
     margin-bottom: 20px;
   }
+
+  .suggestion-link {
+    margin-top: 20px;
+    font-size: 16px;
+    color: #333;
+  }
+  
+  .suggestion-link a {
+    color: #1a73e8;
+    text-decoration: none;
+  }
+  
+  .suggestion-link a:hover {
+    text-decoration: underline;
+  }
+  

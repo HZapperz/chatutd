@@ -1,3 +1,10 @@
+body, html {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  overflow: hidden;
+}
+
 .chat-container {
   display: flex;
   flex-direction: column;
@@ -10,6 +17,7 @@
   overflow: hidden;
   position: relative;
 }
+
 .chat-messages {
   flex-grow: 1;
   overflow-y: auto;
@@ -89,6 +97,12 @@
   background-color: #00553e;
 }
 
+.banner {
+  background-color: #f4a460; /* Your orange color */
+  padding: 10px;
+  text-align: center;
+}
+
 .scroll-down-button {
   position: absolute;
   bottom: 70px;
@@ -114,8 +128,16 @@
 @media (max-width: 400px) {
   .chat-container {
     width: 100%;
-    height: calc(100vh - 70px); /* Adjust this value based on your QOTD banner height */
+    height: calc(100vh - 130px); /* Adjust based on your header and banner height */
     margin: 0;
     border-radius: 0;
+  }
+  
+  .scroll-down-button {
+    bottom: 60px;
+    right: 10px;
+    width: 30px;
+    height: 30px;
+    font-size: 16px;
   }
 }

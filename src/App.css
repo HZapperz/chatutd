@@ -17,11 +17,12 @@ body, html {
   flex-grow: 1;
   display: flex;
   flex-direction: column;
-  align-items: center; /* This centers the content horizontally */
-  justify-content: flex-start; /* Aligns content to the top */
+  align-items: center;
+  justify-content: flex-start;
   width: 100%;
   padding-left: 200px; /* Width of the sidebar */
   box-sizing: border-box;
+  overflow-y: auto; /* Allow vertical scrolling if content exceeds viewport */
 }
 
 .qotd-banner {
@@ -43,14 +44,32 @@ body, html {
   font-weight: normal;
 }
 
+.page-content {
+  width: 400px; /* Match the width of the chat container */
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+}
 
 @media (max-width: 768px) {
+  .app {
+    flex-direction: column;
+    height: 100%;
+  }
+
   .main-content {
     padding-left: 0;
+    height: calc(100% - 50px); /* Adjust based on your navigation bar height */
+    overflow-y: auto;
   }
 
   .qotd-banner,
   .page-content {
     width: 100%;
+  }
+
+  .page-content {
+    flex: 1;
+    overflow-y: auto;
   }
 }

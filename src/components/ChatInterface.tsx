@@ -160,17 +160,14 @@ const ChatInterface: React.FC = () => {
         {chatMessages.map((msg, index) => (
           <div key={index} className="message-container">
             <span className="message-sender">{msg.user_id}</span>
-            <span className="message-timestamp">{new Date(msg.timestamp * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+            <span className="message-timestamp">
+              {new Date(msg.timestamp * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+            </span>
             <div className="message-text">{msg.message}</div>
           </div>
         ))}
         <div ref={messagesEndRef} />
       </div>
-      {showScrollButton && (
-        <button className="scroll-down-button" onClick={enableAutoScroll}>
-          ↓
-        </button>
-      )}
       <div className="chat-input-container">
         <input
           type="text"
@@ -181,8 +178,15 @@ const ChatInterface: React.FC = () => {
           placeholder={`Type your message here (${MAX_MESSAGE_LENGTH} characters max)`}
           disabled={!isConnected}
         />
-        <button className="send-button" onClick={sendMessage} disabled={!isConnected}>Send</button>
+        <button className="send-button" onClick={sendMessage} disabled={!isConnected}>
+          Send
+        </button>
       </div>
+      {showScrollButton && (
+        <button className="scroll-down-button" onClick={enableAutoScroll}>
+          ↓
+        </button>
+      )}
       {!isConnected && <div className="connection-status">Connecting...</div>}
     </div>
   );
